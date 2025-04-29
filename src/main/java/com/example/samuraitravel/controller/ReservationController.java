@@ -27,7 +27,6 @@ import com.example.samuraitravel.form.ReservationInputForm;
 import com.example.samuraitravel.security.UserDetailsImpl;
 import com.example.samuraitravel.service.HouseService;
 import com.example.samuraitravel.service.ReservationService;
-import com.example.samuraitravel.service.StripeService;
 
 import jakarta.servlet.http.HttpSession;
 
@@ -35,12 +34,10 @@ import jakarta.servlet.http.HttpSession;
 public class ReservationController {
 	private final ReservationService reservationService;
 	private final HouseService houseService;
-	private final StripeService stripeService;
 
 	public ReservationController(ReservationService reservationService, HouseService houseService, StripeService stripeService) {
 		this.reservationService = reservationService;
 		this.houseService = houseService;
-		this.stripeService = stripeService;
 	}
 
 	@GetMapping("/reservations")
@@ -113,7 +110,7 @@ public class ReservationController {
 	}
 	
 	@GetMapping("/reservations/confirm")
-	public String confirm(@AuthenticationPrincipal UserDetailsImpl userDetailsImpl, RedirectAttributes redirectAttributes, HttpSession httpSession, Model model) {
+	public String confirm(RedirectAttributes redirectAttributes, HttpSession httpSession, Model model) {
 		//セッションからDTOを取得する
 		ReservationDTO reservationDTO = (ReservationDTO)httpSession.getAttribute("reservationDTO");
 		
@@ -123,17 +120,14 @@ public class ReservationController {
 			return "redirect:/houses";
 		}
 		
-		User user = userDetailsImpl.getUser();
-		
-		String sessionId = stripeService.createStripeSession(reservationDTO, user);
 		
 		model.addAttribute("reservationDTO", reservationDTO);
-		model.addAttribute("sessionId", sessionId);
+		
 		
 		return "reservations/confirm";
 	}
 	
-	/*
+	
 	
 	@PostMapping("/reservations/create")
 	public String create(@AuthenticationPrincipal UserDetailsImpl userDetailsImpl, RedirectAttributes redirectAttributes, HttpSession httpSession) {
@@ -154,5 +148,5 @@ public class ReservationController {
 		
 		return "redirect:/reservations?reserved";
 	}
-	*/
+	
 }
