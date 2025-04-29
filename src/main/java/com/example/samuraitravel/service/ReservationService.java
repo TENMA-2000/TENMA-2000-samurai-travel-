@@ -3,7 +3,6 @@ package com.example.samuraitravel.service;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -11,26 +10,23 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.BindingResult;
 
+import com.example.samuraitravel.dto.ReservationDTO;
 import com.example.samuraitravel.entity.House;
 import com.example.samuraitravel.entity.Reservation;
 import com.example.samuraitravel.entity.User;
 import com.example.samuraitravel.repository.HouseRepository;
 import com.example.samuraitravel.repository.ReservationRepository;
-import com.example.samuraitravel.repository.UserRepository;
 
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.transaction.Transactional;
 
 @Service
 public class ReservationService {
 	private final ReservationRepository reservationRepository;
 	private final HouseRepository houseRepository;
-	private final UserRepository userRepository;
 	
-	public ReservationService(ReservationRepository reservationRepository, HouseRepository houseRepository, UserRepository userRepository) {
+	public ReservationService(ReservationRepository reservationRepository, HouseRepository houseRepository) {
 		this.reservationRepository = reservationRepository;
 		this.houseRepository = houseRepository;
-		this.userRepository = userRepository;
 	}
 	
 	//指定されたユーザーに紐づく予約を作成日時が新しい順に並び替え、ページングされた状態で取得する
@@ -80,29 +76,19 @@ public class ReservationService {
 	}
 	
 	@Transactional
-	public void createReservation(Map<String, String> sessionMetadate) {
+	public void createReservation(ReservationDTO reservationDTO, User user) {
 		Reservation reservation = new Reservation();
 		
-		Integer houseId = Integer.valueOf(sessionMetadate.get("houseId"));
-		Integer userId = Integer.valueOf(sessionMetadate.get("userId"));
-		
-		Optional<House> optionalHouse = houseRepository.findById(houseId);
+		Optional<House> optionalHouse = houseRepository.findById(reservationDTO.getHouseId());
 		House house = optionalHouse.orElseThrow(() -> new EntityNotFoundException("指定されたIDの民宿が存在しません。"));
 		
-		Optional<User> optionalUser = userRepository.findById(userId);
-		User user = optionalUser.orElseThrow(() -> new EntityNotFoundException("指定されたIDのユーザーが存在しません。"));
-		
-		LocalDate checkinDate = LocalDate.parse(sessionMetadate.get("checkinDate"));
-		LocalDate checkoutDate = LocalDate.parse(sessionMetadate.get("checkoutDate"));
-		Integer numberOfPeople = Integer.valueOf(sessionMetadate.get("numberOfPeople"));
-		Integer amount = Integer.valueOf(sessionMetadate.get("amount"));
 		
 		reservation.setHouse(house);
 		reservation.setUser(user);
-		reservation.setCheckinDate(checkinDate);
-		reservation.setCheckoutDate(checkoutDate);
-		reservation.setNumberOfPeople(numberOfPeople);
-		reservation.setAmount(amount);
+		reservation.setCheckinDate(reservationDTO.getCheckinDate());
+		reservation.setCheckoutDate(reservationDTO.getCheckoutDate());
+		reservation.setNumberOfPeople(reservationDTO.getNumberOfPeople());
+		reservation.setAmount(reservationDTO.getAmount());
 		
 		reservationRepository.save(reservation);
 	}
